@@ -47,6 +47,11 @@ private:
 	FVector GetAirResistance() const;
 	FVector GetRollingResistance() const;
 
+
+	UFUNCTION()
+	void OnRep_ReplicatedTransform();
+
+
 private:
 	// mass (kg)
 	UPROPERTY(EditAnywhere)
@@ -73,11 +78,8 @@ private:
 	float RollingResistanceCoefficient = 0.015f;
 
 
-	UPROPERTY(Replicated)
-	FVector ReplicatedLocation = FVector::ZeroVector;
-
-	UPROPERTY(Replicated)
-	FRotator ReplicatedRotation = FRotator::ZeroRotator;
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+	FTransform ReplicatedTransform = FTransform::Identity;
 
 
 	FVector Velocity = FVector::ZeroVector;

@@ -22,15 +22,18 @@ void AGoKart::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(AGoKart, ReplicatedLocation);
-    DOREPLIFETIME(AGoKart, ReplicatedRotation);
+    DOREPLIFETIME(AGoKart, ReplicatedTransform);
 }
 
 // Called when the game starts or when spawned
 void AGoKart::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (HasAuthority())
+	{
+		NetUpdateFrequency = 1;
+	}
 }
 
 // Called every frame
@@ -38,41 +41,38 @@ void AGoKart::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+
+	FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
+
+	// ‹ó‹C’ïR
+	Force += GetAirResistance();
+	// “]‚ª‚è’ïR
+	Force += GetRollingResistance();
+
+
+	const FVector Acceleration = Force / Mass;
+	
+
+	Velocity += Acceleration * DeltaTime;
+
+	if (GEngine)
+	{
+		FString DebugString;
+		DebugString += FString::Printf(TEXT("Velocity: %s"), *Velocity.ToString());
+		DebugString += TEXT("\n");
+		DebugString += FString::Printf(TEXT("Speed: %f"), Velocity.Size());
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, DeltaTime, FColor::Green, DebugString);
+	}
+
+	UpdateLocationFromVelocity(DeltaTime);
+
+	ApplyRotation(DeltaTime);
+
+
+	// ƒgƒ‰ƒ“ƒXƒtƒH[ƒ€“¯ŠúŒ³î•ñ
 	if (HasAuthority())
 	{
-		FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
-
-		// ‹ó‹C’ïR
-		Force += GetAirResistance();
-		// “]‚ª‚è’ïR
-		Force += GetRollingResistance();
-
-
-		const FVector Acceleration = Force / Mass;
-		
-
-		Velocity += Acceleration * DeltaTime;
-
-		if (GEngine)
-		{
-			FString DebugString;
-			DebugString += FString::Printf(TEXT("Velocity: %s"), *Velocity.ToString());
-			DebugString += TEXT("\n");
-			DebugString += FString::Printf(TEXT("Speed: %f"), Velocity.Size());
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, DeltaTime, FColor::Green, DebugString);
-		}
-
-		UpdateLocationFromVelocity(DeltaTime);
-
-		ApplyRotation(DeltaTime);
-
-		ReplicatedLocation = GetActorLocation();
-		ReplicatedRotation = GetActorRotation();
-	}
-	else
-	{
-		SetActorLocation(ReplicatedLocation);
-		SetActorRotation(ReplicatedRotation);
+		ReplicatedTransform = GetActorTransform();
 	}
 
 
@@ -174,4 +174,11 @@ FVector AGoKart::GetRollingResistance() const
 	const FVector Result = -(Velocity.GetSafeNormal() * NormalForce * RollingResistanceCoefficient);
 	
 	return Result;
+}
+
+void AGoKart::OnRep_ReplicatedTransform()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_ReplicatedTransform"));
+
+	SetActorTransform(ReplicatedTransform);
 }
