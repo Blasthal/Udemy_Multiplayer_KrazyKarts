@@ -30,7 +30,15 @@ public:
 
 private:
 	void MoveForward(float Value);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveForward(float Value);
+
 	void MoveRight(float Value);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveRight(float Value);
+
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
@@ -63,6 +71,13 @@ private:
 	// ì]Ç™ÇËíÔçRåWêî
 	UPROPERTY(EditAnywhere)
 	float RollingResistanceCoefficient = 0.015f;
+
+
+	UPROPERTY(Replicated)
+	FVector ReplicatedLocation = FVector::ZeroVector;
+
+	UPROPERTY(Replicated)
+	FRotator ReplicatedRotation = FRotator::ZeroRotator;
 
 
 	FVector Velocity = FVector::ZeroVector;
