@@ -52,6 +52,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDegreesPerSecond = 90.0f;
 
+	// (m)
+	UPROPERTY(EditAnywhere)
+	float MinTurningRadius = 10.0f;
+
 	// ‹ó‹C’ïRŒW”
 	UPROPERTY(EditAnywhere)
 	float DragCoefficient = 16.0f;
