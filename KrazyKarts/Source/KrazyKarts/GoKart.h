@@ -36,6 +36,7 @@ private:
 
 	void ApplyRotation(float DeltaTime);
 
+	FVector GetResistance();
 
 private:
 	// mass (kg)
@@ -45,10 +46,14 @@ private:
 	// Max Velocity
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce = 10000;
-
+	
 	// (degrees / s)
 	UPROPERTY(EditAnywhere)
 	float MaxDegreesPerSecond = 90.0f;
+
+	// (degrees / s)
+	UPROPERTY(EditAnywhere)
+	float DragCoefficient = 16;
 
 
 	FVector Velocity = FVector::ZeroVector;
