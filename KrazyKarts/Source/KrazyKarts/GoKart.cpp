@@ -29,9 +29,13 @@ void AGoKart::Tick(float DeltaTime)
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
 
 	// ‹ó‹C’ïR
-	Force += GetResistance();
+	Force += GetAirResistance();
+	// “]‚ª‚è’ïR
+	Force += GetRollingResistance();
+
 
 	const FVector Acceleration = Force / Mass;
+	
 
 	Velocity += Acceleration * DeltaTime;
 
@@ -40,7 +44,7 @@ void AGoKart::Tick(float DeltaTime)
 		FString DebugString;
 		DebugString += FString::Printf(TEXT("Velocity=%s"), *Velocity.ToString());
 		DebugString += TEXT("\n");
-		DebugString += FString::Printf(TEXT("Speed=%6.3f"), Velocity.Size());
+		DebugString += FString::Printf(TEXT("Speed=%f"), Velocity.Size());
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 0.0f, FColor::Green, DebugString);
 	}
 
@@ -90,7 +94,16 @@ void AGoKart::ApplyRotation(float DeltaTime)
 	Velocity = RotationDelta.RotateVector(Velocity);
 }
 
-FVector AGoKart::GetResistance()
+FVector AGoKart::GetAirResistance() const
 {
 	return -(Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient);
+}
+
+FVector AGoKart::GetRollingResistance() const
+{
+	const float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
+	const float NormalForce = Mass * AccelerationDueToGravity;
+	const FVector Result = -(Velocity.GetSafeNormal() * NormalForce * RollingResistanceCoefficient);
+	
+	return Result;
 }

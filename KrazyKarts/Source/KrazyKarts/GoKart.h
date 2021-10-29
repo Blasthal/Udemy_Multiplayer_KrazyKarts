@@ -36,7 +36,8 @@ private:
 
 	void ApplyRotation(float DeltaTime);
 
-	FVector GetResistance();
+	FVector GetAirResistance() const;
+	FVector GetRollingResistance() const;
 
 private:
 	// mass (kg)
@@ -51,9 +52,13 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDegreesPerSecond = 90.0f;
 
-	// (degrees / s)
+	// ‹ó‹C’ïRŒW”
 	UPROPERTY(EditAnywhere)
-	float DragCoefficient = 16;
+	float DragCoefficient = 16.0f;
+
+	// “]‚ª‚è’ïRŒW”
+	UPROPERTY(EditAnywhere)
+	float RollingResistanceCoefficient = 0.015f;
 
 
 	FVector Velocity = FVector::ZeroVector;
