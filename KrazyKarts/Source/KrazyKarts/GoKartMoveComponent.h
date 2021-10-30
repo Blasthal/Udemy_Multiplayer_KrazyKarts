@@ -52,6 +52,8 @@ public:
 	void SetThrottle(float Throttle);
 	void SetSteeringThrow(float SteeringThrow);
 	
+	const FGoKartMove& GetLastMove() const;
+
 private:
 	void UpdateLocationFromVelocity(float DeltaTime);
 
@@ -84,4 +86,5 @@ private:
 	FVector Velocity = FVector::ZeroVector;
 	float Throttle = 0.0f;
 	float SteeringThrow = 0.0f;
+	FGoKartMove LastMove;
 };

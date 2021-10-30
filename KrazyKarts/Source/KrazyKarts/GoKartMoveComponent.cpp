@@ -33,7 +33,16 @@ void UGoKartMoveComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+
+	// 操作してるアクターの場合のみ処理する
+	if (const APawn* Pawn = CastChecked<APawn>(GetOwner()))
+	{
+		if (Pawn->IsLocallyControlled())
+		{
+			LastMove = CreateMove(DeltaTime);
+			SimulatedMove(LastMove);
+		}
+	}
 }
 
 FGoKartMove UGoKartMoveComponent::CreateMove(const float& DeltaTime) const
@@ -98,6 +107,12 @@ void UGoKartMoveComponent::SetThrottle(float Throttle)
 void UGoKartMoveComponent::SetSteeringThrow(float SteeringThrow)
 {
 	this->SteeringThrow = SteeringThrow;
+}
+
+
+const FGoKartMove& UGoKartMoveComponent::GetLastMove() const
+{
+	return LastMove;
 }
 
 void UGoKartMoveComponent::UpdateLocationFromVelocity(float DeltaTime)
