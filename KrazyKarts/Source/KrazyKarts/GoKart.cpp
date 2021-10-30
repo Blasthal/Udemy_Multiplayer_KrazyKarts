@@ -16,6 +16,9 @@ AGoKart::AGoKart()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SetReplicates(true);
+	SetReplicateMovement(false);
+
 	MovementComponent = CreateDefaultSubobject<UGoKartMoveComponent>(TEXT("MovementComponent"));
 	ensure(MovementComponent);
 

@@ -76,7 +76,7 @@ void UGoKartMovementReplicator::TickComponent(float DeltaTime, ELevelTick TickTy
 		}
 		case ENetRole::ROLE_SimulatedProxy:
 		{
-			MovementComponent->SimulatedMove(ServerState.LastMove);
+			ClientTick(DeltaTime);
 			break;
 		}
 		default:
@@ -147,6 +147,57 @@ void UGoKartMovementReplicator::UpdateServerState(const FGoKartMove& Move)
 }
 
 
+void UGoKartMovementReplicator::ClientTick(float DeltaTime)
+{
+	ClientTimeSinceUpdate += DeltaTime;
+
+	// ごく僅かな時間なら処理しない
+	if (ClientTimeBetweenLastUpdates < KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+
+
+	// 位置
+	const FVector TargetLocation = ServerState.Transform.GetLocation();
+	const float LerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
+	const FVector StartLocation = ClientStartTransform.GetLocation();
+	const FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, LerpRatio);
+
+	GetOwner()->SetActorLocation(NewLocation);
+
+
+	// 回転
+	const FQuat TargetRotation = ServerState.Transform.GetRotation();
+	const FQuat StartRotation = ClientStartTransform.GetRotation();
+	const FQuat NewRotation = FQuat::Slerp(StartRotation, TargetRotation, LerpRatio);
+
+	GetOwner()->SetActorRotation(NewRotation);
+
+
+	// デバッグ表示
+	{
+		FString DebugString;
+		DebugString += FString::Printf(TEXT("ClientTimeSinceUpdate: %f"), ClientTimeSinceUpdate);
+		DebugString += TEXT("\n");
+		DebugString += FString::Printf(TEXT("ClientTimeBetweenLastUpdates: %f"), ClientTimeBetweenLastUpdates);
+		DebugString += TEXT("\n");
+		DebugString += FString::Printf(TEXT("LerpRatio: %f"), LerpRatio);
+		DebugString += TEXT("\n");
+
+		DrawDebugString(
+			GetWorld(),
+			FVector::DownVector * 100.0f,
+			DebugString,
+			this->GetOwner(),
+			FColor::White,
+			DeltaTime / 2,
+			true
+		);
+	}
+}
+
+
 void UGoKartMovementReplicator::Server_SendMove_Implementation(const FGoKartMove& Move)
 {
 	ensure(MovementComponent);
@@ -171,6 +222,19 @@ void UGoKartMovementReplicator::OnRep_ServerState()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnRep_ServerState"));
 
+	if (GetOwnerRole() == ENetRole::ROLE_AutonomousProxy)
+	{
+		AutonomousProxy_OnRep_ServerState();
+	}
+	else if (GetOwnerRole() == ENetRole::ROLE_SimulatedProxy)
+	{
+		SimulatedProxy_OnRep_ServerState();
+	}
+}
+
+
+void UGoKartMovementReplicator::AutonomousProxy_OnRep_ServerState()
+{
 	ensure(MovementComponent);
 	if (!MovementComponent)
 	{
@@ -187,4 +251,12 @@ void UGoKartMovementReplicator::OnRep_ServerState()
 	{
 		MovementComponent->SimulatedMove(Move);
 	}
+}
+
+
+void UGoKartMovementReplicator::SimulatedProxy_OnRep_ServerState()
+{
+	ClientTimeBetweenLastUpdates = ClientTimeSinceUpdate;
+	ClientTimeSinceUpdate = 0;
+	ClientStartTransform = GetOwner()->GetActorTransform();
 }
