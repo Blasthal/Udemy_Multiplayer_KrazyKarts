@@ -4,25 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "GoKartMoveComponent.h"
 #include "GoKart.generated.h"
-
-USTRUCT()
-struct FGoKartMove
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	float Throttle;
-
-	UPROPERTY()
-	float SteeringThrow;
-
-	UPROPERTY()
-	float DeltaTime;
-	
-	UPROPERTY()
-	float Time;
-};
 
 USTRUCT()
 struct FGoKartState
@@ -62,9 +45,6 @@ public:
 
 
 private:
-	void SimulatedMove(const FGoKartMove& Move);
-
-	FGoKartMove CreateMove(const float& DeltaTime) const;
 	void ClearAcknowledgeMoves(const FGoKartMove& LastMove);
 
 	void MoveForward(float Value);
@@ -74,51 +54,24 @@ private:
 	void Server_SendMove(FGoKartMove Move);
 
 
-	void UpdateLocationFromVelocity(float DeltaTime);
-
-	void ApplyRotation(float DeltaTime, float SteeringThrow);
-
-	FVector GetAirResistance() const;
-	FVector GetRollingResistance() const;
-
-
 	UFUNCTION()
 	void OnRep_ServerState();
 
 
 private:
-	// mass (kg)
-	UPROPERTY(EditAnywhere)
-	float Mass = 1000;
-
-	// Max Velocity
-	UPROPERTY(EditAnywhere)
-	float MaxDrivingForce = 10000;
-	
 	// (degrees / s)
 	UPROPERTY(EditAnywhere)
 	float MaxDegreesPerSecond = 90.0f;
-
-	// (m)
-	UPROPERTY(EditAnywhere)
-	float MinTurningRadius = 10.0f;
-
-	// ãÛãCíÔçRåWêî
-	UPROPERTY(EditAnywhere)
-	float DragCoefficient = 16.0f;
-
-	// ì]Ç™ÇËíÔçRåWêî
-	UPROPERTY(EditAnywhere)
-	float RollingResistanceCoefficient = 0.015f;
 
 
 	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
 	FGoKartState ServerState;
 
 	
-	FVector Velocity = FVector::ZeroVector;
-	float Throttle = 0.0f;
-	float SteeringThrow = 0.0f;
-
 	TArray<FGoKartMove> UnacknowledgedMoves;
+
+
+private:
+	UPROPERTY()
+	UGoKartMoveComponent* MovementComponent = nullptr;
 };
