@@ -4,7 +4,6 @@
 #include "GoKart.h"
 
 #include "DrawDebugHelpers.h"
-#include "UnrealNetwork.h"
 #include "Components/InputComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/GameStateBase.h"
@@ -17,7 +16,7 @@ AGoKart::AGoKart()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SetReplicates(true);
-	SetReplicateMovement(false);
+    AActor::SetReplicateMovement(false);
 
 	MovementComponent = CreateDefaultSubobject<UGoKartMoveComponent>(TEXT("MovementComponent"));
 	ensure(MovementComponent);
