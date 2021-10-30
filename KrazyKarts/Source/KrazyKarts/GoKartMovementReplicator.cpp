@@ -158,46 +158,16 @@ void UGoKartMovementReplicator::ClientTick(float DeltaTime)
 	}
 
 
-	// 位置
-	const FVector TargetLocation = ServerState.Transform.GetLocation();
+	// 補間
+	const FHermiteCubicSpline Spline = CreateSpline();
 	const float LerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
-	const FVector StartLocation = ClientStartTransform.GetLocation();
-	const float VelocityToDerivative = ClientTimeBetweenLastUpdates * 100.0f; // (m/s) -> (cm/s)
-	const FVector StartDerivative = ClientStartVelocity * VelocityToDerivative;
-	const FVector TargetDerivative = ServerState.Velocity * VelocityToDerivative; 
 
-	const FVector NewLocation = FMath::CubicInterp(
-		StartLocation, StartDerivative,
-		TargetLocation, TargetDerivative,
-		LerpRatio
-	);
-
-	GetOwner()->SetActorLocation(NewLocation);
-
-
-	const FVector NewDerivative = FMath::CubicInterpDerivative(
-		StartLocation, StartDerivative,
-		TargetLocation, TargetDerivative,
-		LerpRatio
-	);
-
-	const FVector NewVelocity = NewDerivative / VelocityToDerivative;
-
-	ensure(MovementComponent);
-	if (MovementComponent)
-	{
-		MovementComponent->SetVelocity(NewVelocity);
-	}
-
-
-
-
+	// 位置
+	InterpolateLocation(Spline, LerpRatio);
+	// 速度
+	InterpolateVelocity(Spline, LerpRatio);
 	// 回転
-	const FQuat TargetRotation = ServerState.Transform.GetRotation();
-	const FQuat StartRotation = ClientStartTransform.GetRotation();
-	const FQuat NewRotation = FQuat::Slerp(StartRotation, TargetRotation, LerpRatio);
-
-	GetOwner()->SetActorRotation(NewRotation);
+	InterpolateRotation(LerpRatio);
 
 
 	// デバッグ表示
@@ -220,6 +190,56 @@ void UGoKartMovementReplicator::ClientTick(float DeltaTime)
 			true
 		);
 	}
+}
+
+
+FHermiteCubicSpline UGoKartMovementReplicator::CreateSpline() const
+{
+	FHermiteCubicSpline Spline;
+	Spline.TargetLocation = ServerState.Transform.GetLocation();
+	Spline.StartLocation = ClientStartTransform.GetLocation();
+	Spline.StartDerivative = ClientStartVelocity * VelocityToDerivative();
+	Spline.TargetDerivative = ServerState.Velocity * VelocityToDerivative();
+
+	return Spline;
+}
+
+
+float UGoKartMovementReplicator::VelocityToDerivative() const
+{
+	// 100.0fは (m/s) -> (cm/s) への変換
+	const float VelocityToDerivative = ClientTimeBetweenLastUpdates * 100.0f;
+	return VelocityToDerivative;
+}
+
+
+void UGoKartMovementReplicator::InterpolateLocation(const FHermiteCubicSpline& Spline, float LerpRatio) const
+{
+	const FVector NewLocation = Spline.InterpolateLocation(LerpRatio);
+	GetOwner()->SetActorLocation(NewLocation);
+}
+
+
+void UGoKartMovementReplicator::InterpolateVelocity(const FHermiteCubicSpline& Spline, float LerpRatio) const
+{
+	const FVector NewDerivative = Spline.InterpolateDerivative(LerpRatio);
+	const FVector NewVelocity = NewDerivative / VelocityToDerivative();
+
+	ensure(MovementComponent);
+	if (MovementComponent)
+	{
+		MovementComponent->SetVelocity(NewVelocity);
+	}
+}
+
+
+void UGoKartMovementReplicator::InterpolateRotation(float LerpRatio) const
+{
+	const FQuat TargetRotation = ServerState.Transform.GetRotation();
+	const FQuat StartRotation = ClientStartTransform.GetRotation();
+	const FQuat NewRotation = FQuat::Slerp(StartRotation, TargetRotation, LerpRatio);
+
+	GetOwner()->SetActorRotation(NewRotation);
 }
 
 
