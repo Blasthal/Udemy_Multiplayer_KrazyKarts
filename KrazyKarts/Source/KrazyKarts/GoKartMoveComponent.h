@@ -23,6 +23,8 @@ struct FGoKartMove
 	
 	UPROPERTY()
 	float Time;
+
+	bool IsValid() const;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -47,17 +49,17 @@ public:
 	void SimulatedMove(const FGoKartMove& Move);
 
 	const FVector& GetVelocity() const;
-	void SetVelocity(const FVector& Velocity);
+	void SetVelocity(const FVector& Value);
 
-	void SetThrottle(float Throttle);
-	void SetSteeringThrow(float SteeringThrow);
+	void SetThrottle(float Value);
+	void SetSteeringThrow(float Value);
 	
 	const FGoKartMove& GetLastMove() const;
 
 private:
 	void UpdateLocationFromVelocity(float DeltaTime);
 
-	void ApplyRotation(float DeltaTime, float SteeringThrow);
+	void ApplyRotation(float DeltaTime, float InSteeringThrow);
 
 	FVector GetAirResistance() const;
 	FVector GetRollingResistance() const;

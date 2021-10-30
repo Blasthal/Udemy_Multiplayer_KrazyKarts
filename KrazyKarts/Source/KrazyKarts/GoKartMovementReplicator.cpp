@@ -5,7 +5,9 @@
 
 #include "DrawDebugHelpers.h"
 #include "UnrealNetwork.h"
+#include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/Pawn.h"
 
 // Sets default values for this component's properties
@@ -259,6 +261,8 @@ void UGoKartMovementReplicator::Server_SendMove_Implementation(const FGoKartMove
 		return;
 	}
 
+	ClientSimulatedTime += Move.DeltaTime;
+
 	MovementComponent->SimulatedMove(Move);
 
 	UpdateServerState(Move);
@@ -267,7 +271,21 @@ void UGoKartMovementReplicator::Server_SendMove_Implementation(const FGoKartMove
 
 bool UGoKartMovementReplicator::Server_SendMove_Validate(const FGoKartMove& Move)
 {
-	return true; // TODO: make better
+	const float ProcessedTime = ClientSimulatedTime - Move.DeltaTime;
+	const bool bClientNotRunningAhead = (ProcessedTime < GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
+	if (!bClientNotRunningAhead)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Client is running too fast."));
+		return false;
+	}
+
+	if (!Move.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Receive invalid move."));
+		return false;
+	}
+
+	return true;
 }
 
 

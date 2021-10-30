@@ -7,6 +7,25 @@
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
 
+
+bool FGoKartMove::IsValid() const
+{
+	const bool bValidThrottle = (FMath::Abs(Throttle) <= 1);
+	if (!bValidThrottle)
+	{
+		return false;
+	}
+
+	const bool bValidSteeringThrow = (FMath::Abs(SteeringThrow) <= 1);
+	if (!bValidSteeringThrow)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
 // Sets default values for this component's properties
 UGoKartMoveComponent::UGoKartMoveComponent()
 {
@@ -94,19 +113,19 @@ const FVector& UGoKartMoveComponent::GetVelocity() const
 	return Velocity;
 }
 
-void UGoKartMoveComponent::SetVelocity(const FVector& Velocity)
+void UGoKartMoveComponent::SetVelocity(const FVector& Value)
 {
-	this->Velocity = Velocity;
+	this->Velocity = Value;
 }
 
-void UGoKartMoveComponent::SetThrottle(float Throttle)
+void UGoKartMoveComponent::SetThrottle(float Value)
 {
-	this->Throttle = Throttle;
+	this->Throttle = Value;
 }
 
-void UGoKartMoveComponent::SetSteeringThrow(float SteeringThrow)
+void UGoKartMoveComponent::SetSteeringThrow(float Value)
 {
-	this->SteeringThrow = SteeringThrow;
+	this->SteeringThrow = Value;
 }
 
 
@@ -127,10 +146,10 @@ void UGoKartMoveComponent::UpdateLocationFromVelocity(float DeltaTime)
 	}
 }
 
-void UGoKartMoveComponent::ApplyRotation(float DeltaTime, float SteeringThrow)
+void UGoKartMoveComponent::ApplyRotation(float DeltaTime, float InSteeringThrow)
 {
 	const float DeltaLocation = FVector::DotProduct(GetOwner()->GetActorForwardVector(), Velocity) * DeltaTime;
-	const float RotationAngle = DeltaLocation / MinTurningRadius * SteeringThrow;
+	const float RotationAngle = DeltaLocation / MinTurningRadius * InSteeringThrow;
 	const FQuat RotationDelta(GetOwner()->GetActorUpVector(), RotationAngle);
 
 	GetOwner()->AddActorWorldRotation(RotationDelta);
