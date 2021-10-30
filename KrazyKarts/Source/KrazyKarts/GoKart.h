@@ -6,6 +6,39 @@
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
+USTRUCT()
+struct FGoKartMove
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Throttle;
+
+	UPROPERTY()
+	float SteeringThrow;
+
+	UPROPERTY()
+	float DeltaTime;
+	
+	UPROPERTY()
+	float Time;
+};
+
+USTRUCT()
+struct FGoKartState
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FTransform Transform;
+
+	UPROPERTY()
+	FVector Velocity;
+
+	UPROPERTY()
+	FGoKartMove LastMove;
+};
+
 UCLASS()
 class KRAZYKARTS_API AGoKart : public APawn
 {
@@ -29,27 +62,28 @@ public:
 
 
 private:
+	void SimulatedMove(const FGoKartMove& Move);
+
+	FGoKartMove CreateMove(const float& DeltaTime) const;
+	void ClearAcknowledgeMoves(const FGoKartMove& LastMove);
+
 	void MoveForward(float Value);
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Value);
-
 	void MoveRight(float Value);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Value);
+	void Server_SendMove(FGoKartMove Move);
 
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
-	void ApplyRotation(float DeltaTime);
+	void ApplyRotation(float DeltaTime, float SteeringThrow);
 
 	FVector GetAirResistance() const;
 	FVector GetRollingResistance() const;
 
 
 	UFUNCTION()
-	void OnRep_ReplicatedTransform();
+	void OnRep_ServerState();
 
 
 private:
@@ -78,11 +112,13 @@ private:
 	float RollingResistanceCoefficient = 0.015f;
 
 
-	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
-	FTransform ReplicatedTransform = FTransform::Identity;
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+	FGoKartState ServerState;
 
-
+	
 	FVector Velocity = FVector::ZeroVector;
 	float Throttle = 0.0f;
 	float SteeringThrow = 0.0f;
+
+	TArray<FGoKartMove> UnacknowledgedMoves;
 };
